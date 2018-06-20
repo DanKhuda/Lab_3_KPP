@@ -1,80 +1,71 @@
-<!DOCTYPE html>
+<!doctype html>
 <html>
 <head>
+    <meta charset="utf-8">
+    <meta title="lab-3">
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
-<div id = "content">
-    <div id="map"></div>
-    <div id="display"></div>
-</div>
+<div id="map"></div>
 <script>
-    let contentInfo = "";
-    let newRequest = new XMLHttpRequest();
-    let marker;
-    let ourWeather = {
-        coord:{
-            lon:"" ,
-            lat:""
-        },
-        main:{
-            temp: ""
-        },
-        weather:[{
-            id:"",
-            description:"",
-            icon:""
-        }],
-        wind:{
-            speed:""
-        }};
-    let Lat = 49.2331;
-    let Lng = 28.4682;
-    let openWeater = "http://api.openweathermap.org/data/2.5/weather?lat="+Lat+"&lon="+Lng+"&units=metric&APPID=4aa7c0b5ab95d5c353e08771e926bb64";
-    getWeather(openWeater);
+    const COORD = [
+        { lat: 49.233083, lng: 28.468217 }
+    ];
+    var map, marker;
     function initMap() {
-        let vinnitsya = {lat: Lat, lng: Lng};
-        let map = new google.maps.Map(document.getElementById('map'), {
-            zoom: 4,
-            center: vinnitsya
+        map = new google.maps.Map(document.getElementById('map'), {
+            center: COORD[0],
+            zoom: 6
         });
-        function placeMarker(location) {
-            if (marker == null)
-            {
-                marker = new google.maps.Marker({
-                    position: vinnitsya,
-                    map: map
-                });
-            }else {
-                marker.setPosition(location);
+    }
+    function createMarker(location, weather, icon) {
+        marker = new google.maps.Marker({
+            position: new google.maps.LatLng(location),
+            map: map,
+            label: {
+                text: weather.main,
+                color: 'blue'
+            },
+            icon: {
+                url: icon,
+                labelOrigin: new google.maps.Point(30, 40)
             }
-        }
-        getWeather(openWeater);
-        placeMarker();
-        map.addListener('click', function(e) {
-            placeMarker(e.latLng, map);
-            Lat = e.latLng.lat();
-            Lng = e.latLng.lng();
-            var openWeater = "http://api.openweathermap.org/data/2.5/weather?lat="+Lat+"&lon="+Lng+"&units=metric&APPID=4aa7c0b5ab95d5c353e08771e926bb64";
-            getWeather(openWeater);
         });
     }
-    function getWeather(openWeater){
-        newRequest.open("GET",openWeater);
-        newRequest.onload = () => {
-            ourWeather = JSON.parse(newRequest.responseText);
-            showWeather();
-        }
+    function createInfoWindow(contentString) {
+        let infoWindow = new google.maps.InfoWindow();
+        marker.addListener('click', (function(marker) {
+            return function() {
+                infoWindow.setContent(contentString);
+                infoWindow.open(map, marker);
+            }
+        })(marker));
     }
-
-    function showWeather(){
-        contentInfo = "City: "+ourWeather.name + "; "+ "Sky : "+ourWeather.weather[0].description + "; " + "T(C) : "
-            + ((ourWeather.main.temp).toFixed(2)) + '; ' + 'Wind: ' + ourWeather.wind.speed + 'm/s';
-        document.getElementById('display').innerHTML=contentInfo + " " +'<image src="http://openweathermap.org/img/w/'+ourWeather.weather[0].icon+'.png">' ;
+    function getWeather(location) {
+        const API_KEY = '8b55cc8d48eb884c83251946930bc0d5';
+        let url = `http://api.openweathermap.org/data/2.5/weather?lat=${location.lat}&lon=${location.lng}&appid=${API_KEY}`;
+        return fetch (url)
+            .then((response) => response.json());
+    }
+    for (let coord of COORD)
+    {
+        getWeather(coord)
+            .then((json) => {
+                const main = json.main;
+                const weather = json.weather[0];
+                const icon = `http://openweathermap.org/img/w/${weather.icon}.png`;
+                const contentString = `Температура повітря: ${Math.round(main.temp - 273.15)}°C<br>
+                                 Вологість: ${main.humidity}%<br>
+                                 Швидкiсть вітру: ${json.wind.speed}м/с<br>
+                                 Відсоток закритого неба: ${json.clouds.all}%`;
+                coord.content = contentString;
+                console.log(coord);
+                createMarker(coord, weather, icon);
+                createInfoWindow(coord.content);
+            });
     }
 </script>
-<script async defer
-        src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCLNeG0aT6ss4IGY0nxzdU-N5EyOdSzIRI&callback=initMap">
-</script>
+<script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDL2Y_0AD5a03m5YcVOCPZ6tb-P3qHyNDE&callback=initMap"
+        async defer></script>
 </body>
 </html>

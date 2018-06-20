@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div id = "content">
+    <div id="map"></div>
+    <div id="display"></div>
+</div>
+<script>
+    let contentInfo = "";
+    let newRequest = new XMLHttpRequest();
+    let marker;
+    let ourWeather = {
+        coord:{
+            lon:"" ,
+            lat:""
+        },
+        main:{
+            temp: ""
+        },
+        weather:[{
+            id:"",
+            description:"",
+            icon:""
+        }],
+        wind:{
+            speed:""
+        }};
+    let Lat = 49.2331;
+    let Lng = 28.4682;
+    let openWeater = "http://api.openweathermap.org/data/2.5/weather?lat="+Lat+"&lon="+Lng+"&units=metric&APPID=4aa7c0b5ab95d5c353e08771e926bb64";
+    getWeather(openWeater);
+    function initMap() {
+        let vinnitsya = {lat: Lat, lng: Lng};
+        let map = new google.maps.Map(document.getElementById('map'), {
+            zoom: 4,
+            center: vinnitsya
+        });
+        function placeMarker(location) {
+            if (marker == null)
+            {
+                marker = new google.maps.Marker({
+                    position: vinnitsya,
+                    map: map
+                });
+            }else {
+                marker.setPosition(location);
+            }
+        }
+        getWeather(openWeater);
+        placeMarker();
+        map.addListener('click', function(e) {
+            placeMarker(e.latLng, map);
+            Lat = e.latLng.lat();
+            Lng = e.latLng.lng();
+            var openWeater = "http://api.openweathermap.org/data/2.5/weather?lat="+Lat+"&lon="+Lng+"&units=metric&APPID=4aa7c0b5ab95d5c353e08771e926bb64";
+            getWeather(openWeater);
+        });
+    }
+    function getWeather(openWeater){
+        newRequest.open("GET",openWeater);
+        newRequest.onload = () => {
+            ourWeather = JSON.parse(newRequest.responseText);
+            showWeather();
+        }
+    }
+
+    function showWeather(){
+        contentInfo = "City: "+ourWeather.name + "; "+ "Sky : "+ourWeather.weather[0].description + "; " + "T(C) : "
+            + ((ourWeather.main.temp).toFixed(2)) + '; ' + 'Wind: ' + ourWeather.wind.speed + 'm/s';
+        document.getElementById('display').innerHTML=contentInfo + " " +'<image src="http://openweathermap.org/img/w/'+ourWeather.weather[0].icon+'.png">' ;
+    }
+</script>
+<script async defer
+        src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCLNeG0aT6ss4IGY0nxzdU-N5EyOdSzIRI&callback=initMap">
+</script>
+</body>
+</html>
